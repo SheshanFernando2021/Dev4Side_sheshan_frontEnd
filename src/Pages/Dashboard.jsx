@@ -7,6 +7,7 @@ function Dashboard({ onLogOut }) {
     const [tasks, setTasks] = useState([]);
     const [selectedListId, setSelectedListId] = useState(null);
     const [isSmallScreen, setIsSmallScreen] = useState(false);
+    const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
 
     useEffect(() => {
         const fetchLists = async () => {
@@ -81,7 +82,14 @@ function Dashboard({ onLogOut }) {
                     ))}
                 </div>
                 <button className="logoutButton" onClick={onLogOut}>Logout</button>
-                <button className="AddTaskButton" >Add Task</button>
+                <button className="AddTaskButton" onClick={() => setIsAddTaskOpen(true)}>Add Task</button>
+                {isAddTaskOpen && (
+                    <div className="addTaskPanel">
+                        <button className="closeButton" onClick={() => setIsAddTaskOpen(false)}>X</button>
+                        <h3>Add New Task</h3>
+                        {/* You can add your form fields here later */}
+                    </div>
+                )}
             </div>
             <div className="StatusContainers">
                 <div className="statusColumn">
