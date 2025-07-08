@@ -79,17 +79,6 @@ For convenience, some demo accounts with preloaded tasks and lists are already a
 
 ---
 
-## 📁 Project Structure
-
-- `/src` — source code  
-- `/src/components` — reusable UI components  
-- `/src/pages` — page views  
-- `/src/context` — global state with React Context  
-- `/src/routes` — routing config  
-- `/src/styles` — SCSS files  
-- `/src/assets` — images & static files  
-
----
 
 ## 🎯 Features
 
