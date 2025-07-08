@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import './login.css'
 import { useState } from 'react'
 import axios from 'axios';
+import Logo from '../assets/logo.png'
 
 function Login() {
     const [email, setEmail] = useState("");
@@ -53,13 +54,7 @@ function Login() {
         }
         catch (err) {
             console.error(err);
-            if (err.response && err.response.data) {
-                // Backend error response
-                setError("Invalid credentials: " + JSON.stringify(err.response.data));
-            } else {
-                // Network or unexpected error
-                setError("Error: " + err.message);
-            }
+            setError("invalid credentials");
         }
     }
     const logout = () => {
@@ -90,15 +85,14 @@ function Login() {
                     </button>
                 </>
             ) : (<form onSubmit={handleSubmit}>
+                <img src={Logo} alt="" />
                 Email:  <input type="text" value={email} onChange={e => setEmail(e.target.value)} />
-                <br />
-                <br />
-                Password: <input type="text" value={password} onChange={e => setPassword(e.target.value)} />
-                <br />
-                <br />
+
+                Password: <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
+
                 {error && <p style={{ color: 'red' }}>{error}</p>}
                 <br />
-                <br />
+
                 <button type='submit'
                     style={{
                         padding: '10px 20px',
