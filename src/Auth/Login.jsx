@@ -3,7 +3,7 @@ import './login.css'
 import { useState } from 'react'
 import axios from 'axios';
 import Logo from '../assets/logo.png'
-
+import Dashboard from '../Pages/Dashboard';
 function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -66,50 +66,85 @@ function Login() {
         setPassword("");
         window.location.reload();
     }
+    // return (
+    //     <div className='Login-container'>
+    //         {!loggedInUser ?
+    //             <>
+    //                 {/* <Dashboard onLogOut={logout} /> */}
+
+    //                 {/* <button onClick={logout}
+    //                     style={{
+    //                         padding: '10px 20px',
+    //                         backgroundColor: '#dc3545',
+    //                         color: 'white',
+    //                         border: 'none',
+    //                         borderRadius: '4px',
+    //                         cursor: 'pointer'
+    //                     }}>
+    //                     Logout
+    //                 </button> */}
+
+    //                 <form onSubmit={handleSubmit}>
+    //                     <img src={Logo} alt="" />
+    //                     Email:  <input type="text" value={email} onChange={e => setEmail(e.target.value)} />
+
+    //                     Password: <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
+
+    //                     {error && <p style={{ color: 'red' }}>{error}</p>}
+    //                     <br />
+
+    //                     <button type='submit'
+    //                         style={{
+    //                             padding: '10px 20px',
+    //                             backgroundColor: '#007bff',
+    //                             color: 'white',
+    //                             border: 'none',
+    //                             borderRadius: '4px',
+    //                             cursor: 'pointer'
+    //                         }}
+
+    //                     >Login</button>
+    //                     <a href="/register">create an account</a>
+    //                     <br />
+
+    //                 </form>
+
+    //             </> : <button onClick={logout}
+    //                 style={{
+    //                     padding: '10px 20px',
+    //                     backgroundColor: '#dc3545',
+    //                     color: 'white',
+    //                     border: 'none',
+    //                     borderRadius: '4px',
+    //                     cursor: 'pointer'
+    //                 }}>
+    //                 Logout
+    //             </button>}
+    //     </div>
+    // )
+
+
     return (
-        <div className='Login-container'>
+        <>
             {loggedInUser ? (
-                <>
-                    <h2>You are already logged in as {loggedInUser}</h2>
-                    <br /><br />
-                    <button onClick={logout}
-                        style={{
-                            padding: '10px 20px',
-                            backgroundColor: '#dc3545',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer'
-                        }}>
-                        Logout
-                    </button>
-                </>
-            ) : (<form onSubmit={handleSubmit}>
-                <img src={Logo} alt="" />
-                Email:  <input type="text" value={email} onChange={e => setEmail(e.target.value)} />
+                <Dashboard onLogOut={logout} />
+            ) : (
+                <div className='Login-container'>
+                    <form onSubmit={handleSubmit}>
+                        <img src={Logo} alt="" />
+                        Email:  <input type="text" value={email} onChange={e => setEmail(e.target.value)} />
+                        Password: <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
+                        {error && <p style={{ color: 'red' }}>{error}</p>}
+                        <br />
+                        <button type='submit'>Login</button>
+                        <a href="/register">create an account</a>
+                        <br />
+                    </form>
+                </div>
+            )}
+        </>
+    );
 
-                Password: <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
-
-                {error && <p style={{ color: 'red' }}>{error}</p>}
-                <br />
-
-                <button type='submit'
-                    style={{
-                        padding: '10px 20px',
-                        backgroundColor: '#007bff',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                    }}
-
-                >Login</button>
-                <a href="/register">create an account</a>
-                <br />
-
-            </form>)}
-        </div>
-    )
 }
 
 export default Login
