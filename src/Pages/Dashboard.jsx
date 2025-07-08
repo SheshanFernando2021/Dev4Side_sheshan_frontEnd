@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import './dashboard.css';
+import { useNavigate } from 'react-router-dom';
 
-function Dashboard({ onLogOut }) {
+function Dashboard({ onLogOut, isUserLoggedIn }) {
     const [lists, setLists] = useState([]);
     const [tasks, setTasks] = useState([]);
     const [selectedListId, setSelectedListId] = useState(null);
@@ -12,7 +13,15 @@ function Dashboard({ onLogOut }) {
     const [newDueDate, setNewDueDate] = useState('');
     const [newDescription, setNewDescription] = useState('');
     const [newListName, setNewListName] = useState('');
+    const navigate = useNavigate();
 
+    const [selectedTask, setSelectedTask] = useState(null);
+
+    useEffect(() => {
+        if (!isUserLoggedIn) {
+            navigate('/login');
+        }
+    }, [isUserLoggedIn, navigate]);
     useEffect(() => {
         const fetchLists = async () => {
             try {
@@ -33,7 +42,10 @@ function Dashboard({ onLogOut }) {
     }, []);
 
     useEffect(() => {
-        if (!selectedListId) return;
+        if (!selectedListId) {
+            setTasks([]);
+            return;
+        }
 
         const fetchTasks = async () => {
             try {
@@ -148,6 +160,80 @@ function Dashboard({ onLogOut }) {
         }
     };
 
+    const handleDeleteTask = async (taskId) => {
+        if (!window.confirm("Are you sure you want to delete this task?")) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            await axios.delete(`https://Dev4Side.bsite.net/tasks/${taskId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            setTasks(prev => prev.filter(task => task.taskId !== taskId));
+            setSelectedTask(null);
+        } catch (error) {
+            console.error('Error deleting task:', error);
+        }
+    };
+
+    const handleUpdateTask = async () => {
+        if (!selectedTask.name || !selectedTask.dueDate) {
+            alert('Please fill out task name and due date');
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            await axios.put(`https://Dev4Side.bsite.net/tasks/${selectedTask.taskId}`, {
+                ...selectedTask
+            }, {
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+            });
+
+            // Refresh tasks after update
+            const response = await axios.get(`https://Dev4Side.bsite.net/tasks/${selectedListId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setTasks(response.data);
+            alert('Task updated successfully!');
+            setSelectedTask(null);
+        } catch (error) {
+            console.error('Error updating task:', error);
+        }
+    };
+
+    // NEW: Delete List handler
+    const handleDeleteList = async () => {
+        if (!selectedListId) {
+            alert("No list selected to delete");
+            return;
+        }
+        if (!window.confirm("Are you sure you want to delete this list? This will delete all tasks in it.")) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            await axios.delete(`https://Dev4Side.bsite.net/lists/${selectedListId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            // Update lists after deletion
+            const listsResponse = await axios.get('https://Dev4Side.bsite.net/lists', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setLists(listsResponse.data);
+
+            // Reset selected list id to another list if any, else null
+            if (listsResponse.data.length > 0) {
+                setSelectedListId(listsResponse.data[0].listId);
+            } else {
+                setSelectedListId(null);
+                setTasks([]);
+            }
+        } catch (error) {
+            console.error('Error deleting list:', error);
+        }
+    };
+
     const statusMap = [
         { label: 'To Do', value: 'ToDo' },
         { label: 'In Progress', value: 'In Progress' },
@@ -157,7 +243,7 @@ function Dashboard({ onLogOut }) {
     if (isSmallScreen) {
         return (
             <div className="warningMessage">
-                <p>This is a desktop app. Please use a larger screen (≥ 1000px).</p>
+                <p> ⚠️ This is a desktop app. Please use a larger screen (≥ 1000px) ⚠️</p>
             </div>
         );
     }
@@ -178,6 +264,8 @@ function Dashboard({ onLogOut }) {
                 </div>
                 <button className="logoutButton" onClick={onLogOut}>Logout</button>
                 <button className="AddTaskButton" onClick={() => setIsAddTaskOpen(true)}>Add Task</button>
+
+                {/* Add Task Panel */}
                 {isAddTaskOpen && (
                     <div className="addTaskPanel">
                         <button className="closeButton" onClick={() => setIsAddTaskOpen(false)}>X</button>
@@ -188,6 +276,18 @@ function Dashboard({ onLogOut }) {
                             <select
                                 value={selectedListId}
                                 onChange={(e) => setSelectedListId(parseInt(e.target.value))}
+                                style={{
+                                    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                                    color: 'white',
+                                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                                    borderRadius: '8px',
+                                    padding: '8px 12px',
+                                    fontSize: '14px',
+                                    backdropFilter: 'blur(10px)',
+                                    WebkitBackdropFilter: 'blur(10px)',
+                                    outline: 'none',
+                                    cursor: 'pointer',
+                                }}
                             >
                                 {lists.map(list => (
                                     <option key={list.listId} value={list.listId}>
@@ -246,6 +346,66 @@ function Dashboard({ onLogOut }) {
                         <button className="submitListButton" onClick={handleAddList}>
                             Add List
                         </button>
+
+                        {/* NEW: Delete List button */}
+                        <button
+                            className="submitListButton"
+                            style={{ backgroundColor: '#dc3545', marginTop: '10px' }}
+                            onClick={handleDeleteList}
+                        >
+                            Delete Selected List
+                        </button>
+                    </div>
+                )}
+
+                {/* Task Detail/Edit Panel */}
+                {selectedTask && (
+                    <div className="addTaskPanel">
+                        <button className="closeButton" onClick={() => setSelectedTask(null)}>X</button>
+                        <h3>Task Details</h3>
+
+                        <div className="formGroup">
+                            <label>Name:</label>
+                            <input
+                                type="text"
+                                value={selectedTask.name}
+                                onChange={(e) => setSelectedTask({ ...selectedTask, name: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="formGroup">
+                            <label>Description:</label>
+                            <textarea
+                                rows="4"
+                                value={selectedTask.description || ''}
+                                onChange={(e) => setSelectedTask({ ...selectedTask, description: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="formGroup">
+                            <label>Due Date:</label>
+                            <input
+                                type="date"
+                                value={selectedTask.dueDate ? selectedTask.dueDate.slice(0, 10) : ''}
+                                onChange={(e) => setSelectedTask({ ...selectedTask, dueDate: e.target.value })}
+                            />
+                        </div>
+
+                        <button
+                            className="submitListButton"
+                            style={{ backgroundColor: '#007bff', marginTop: '20px' }}
+                            onClick={handleUpdateTask}
+                        >
+                            Update Task
+                        </button>
+
+                        <button
+                            className="submitListButton"
+                            style={{ backgroundColor: '#dc3545', marginTop: '10px' }}
+                            onClick={() => handleDeleteTask(selectedTask.taskId)}
+                        >
+                            Delete Task
+                        </button>
                     </div>
                 )}
             </div>
@@ -267,6 +427,8 @@ function Dashboard({ onLogOut }) {
                                     key={task.taskId ?? idx}
                                     draggable
                                     onDragStart={(e) => handleDragStart(e, task.taskId)}
+                                    onClick={() => setSelectedTask(task)}
+                                    style={{ cursor: 'pointer' }}
                                 >
                                     {task.name}
                                 </div>

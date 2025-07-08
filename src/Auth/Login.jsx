@@ -127,7 +127,7 @@ function Login() {
     return (
         <>
             {loggedInUser ? (
-                <Dashboard onLogOut={logout} />
+                <Dashboard onLogOut={logout} isUserLoggedIn={!!loggedInUser} />
             ) : (
                 <div className='Login-container'>
                     <form onSubmit={handleSubmit}>

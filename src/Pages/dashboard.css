@@ -216,6 +216,18 @@
     align-self: flex-start;
 }
 
+.warningMessage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: black;
+    text-align: center;
+    height: 100vh;
+    margin-top: -20px;
+    padding-bottom: 20px;
+    font-size: 1.5rem;
+}
+
 .submitTaskButton:hover,
 .submitListButton:hover {
     background: rgba(35, 162, 246, 1);
