@@ -67,6 +67,41 @@ function Dashboard({ onLogOut }) {
         );
     }
 
+    const handleDragStart = (e, taskId) => {
+        console.log('Dragging taskId:', taskId);
+        e.dataTransfer.setData('text/plain', taskId.toString());
+    };
+
+    const handleDrop = async (e, newStatus) => {
+        e.preventDefault();
+        const taskId = e.dataTransfer.getData('text/plain');
+        const task = tasks.find(t => t.taskId === parseInt(taskId));
+        if (!task) return;
+
+        try {
+            const token = localStorage.getItem('token');
+
+            await axios.put(`https://Dev4Side.bsite.net/tasks/${taskId}`, {
+                ...task,
+                status: newStatus
+            }, {
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+            });
+
+            setTasks(prev =>
+                prev.map(task => task.taskId === parseInt(taskId) ? { ...task, status: newStatus } : task)
+            );
+        } catch (error) {
+            console.error('Error updating task status:', error);
+        }
+    };
+
+    const statusMap = [
+        { label: 'To Do', value: 'ToDo' },
+        { label: 'In Progress', value: 'In Progress' },
+        { label: 'Completed', value: 'Completed' }
+    ];
+
     return (
         <div className='dashboardContainer'>
             <div className='left'>
@@ -87,29 +122,34 @@ function Dashboard({ onLogOut }) {
                     <div className="addTaskPanel">
                         <button className="closeButton" onClick={() => setIsAddTaskOpen(false)}>X</button>
                         <h3>Add New Task</h3>
-                        {/* You can add your form fields here later */}
+
                     </div>
                 )}
             </div>
             <div className="StatusContainers">
-                <div className="statusColumn">
-                    <h3>To Do</h3>
-                    {tasks.filter(task => task.status === 'ToDo').map((task, idx) => (
-                        <div className="taskCard" key={task.id ?? idx}>{task.name}</div>
-                    ))}
-                </div>
-                <div className="statusColumn">
-                    <h3>In Progress</h3>
-                    {tasks.filter(task => task.status === 'In Progress').map((task, idx) => (
-                        <div className="taskCard" key={task.id ?? idx}>{task.name}</div>
-                    ))}
-                </div>
-                <div className="statusColumn">
-                    <h3>Completed</h3>
-                    {tasks.filter(task => task.status === 'Completed').map((task, idx) => (
-                        <div className="taskCard" key={task.id ?? idx}>{task.name}</div>
-                    ))}
-                </div>
+
+                {statusMap.map(({ label, value }) => (
+                    <div
+                        className="statusColumn"
+                        key={value}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => handleDrop(e, value)}
+                    >
+                        <h3>{label}</h3>
+                        {tasks
+                            .filter(task => task.status === value)
+                            .map((task, idx) => (
+                                <div
+                                    className="taskCard"
+                                    key={task.taskId ?? idx}
+                                    draggable
+                                    onDragStart={(e) => handleDragStart(e, task.taskId)}
+                                >
+                                    {task.name}
+                                </div>
+                            ))}
+                    </div>
+                ))}
             </div>
         </div>
     )
