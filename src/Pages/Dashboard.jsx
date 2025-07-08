@@ -8,6 +8,10 @@ function Dashboard({ onLogOut }) {
     const [selectedListId, setSelectedListId] = useState(null);
     const [isSmallScreen, setIsSmallScreen] = useState(false);
     const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
+    const [newTaskName, setNewTaskName] = useState('');
+    const [newDueDate, setNewDueDate] = useState('');
+    const [newDescription, setNewDescription] = useState('');
+    const [newListName, setNewListName] = useState('');
 
     useEffect(() => {
         const fetchLists = async () => {
@@ -17,11 +21,9 @@ function Dashboard({ onLogOut }) {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setLists(response.data);
-                console.log(response.data);
                 if (response.data.length > 0) {
                     const smallestId = Math.min(...response.data.map(list => list.listId));
                     setSelectedListId(smallestId);
-                    console.log("smallest Listid ", smallestId);
                 }
             } catch (error) {
                 console.error('Error fetching lists:', error);
@@ -59,16 +61,7 @@ function Dashboard({ onLogOut }) {
         return () => window.removeEventListener('resize', checkScreenSize);
     }, []);
 
-    if (isSmallScreen) {
-        return (
-            <div className="warningMessage">
-                <p>This is a desktop app. Please use a larger screen (≥ 1000px).</p>
-            </div>
-        );
-    }
-
     const handleDragStart = (e, taskId) => {
-        console.log('Dragging taskId:', taskId);
         e.dataTransfer.setData('text/plain', taskId.toString());
     };
 
@@ -80,7 +73,6 @@ function Dashboard({ onLogOut }) {
 
         try {
             const token = localStorage.getItem('token');
-
             await axios.put(`https://Dev4Side.bsite.net/tasks/${taskId}`, {
                 ...task,
                 status: newStatus
@@ -96,11 +88,79 @@ function Dashboard({ onLogOut }) {
         }
     };
 
+    const handleAddTask = async () => {
+        if (!newTaskName || !newDueDate || !selectedListId) {
+            alert('Please fill out all fields');
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            await axios.post(`https://Dev4Side.bsite.net/tasks`, {
+                name: newTaskName,
+                description: newDescription,
+                dueDate: newDueDate,
+                listId: selectedListId,
+                status: 'ToDo'
+            }, {
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+            });
+
+            const response = await axios.get(`https://Dev4Side.bsite.net/tasks/${selectedListId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setTasks(response.data);
+
+            setNewTaskName('');
+            setNewDueDate('');
+            setNewDescription('');
+            setIsAddTaskOpen(false);
+        } catch (error) {
+            console.error('Error adding new task:', error);
+        }
+    };
+
+    const handleAddList = async () => {
+        if (!newListName) {
+            alert('Please enter a list name');
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.post(`https://Dev4Side.bsite.net/lists`, {
+                name: newListName
+            }, {
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+            });
+
+            const createdList = response.data;
+
+            const listsResponse = await axios.get('https://Dev4Side.bsite.net/lists', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setLists(listsResponse.data);
+
+            setSelectedListId(createdList.listId);
+            setNewListName('');
+        } catch (error) {
+            console.error('Error adding new list:', error);
+        }
+    };
+
     const statusMap = [
         { label: 'To Do', value: 'ToDo' },
         { label: 'In Progress', value: 'In Progress' },
         { label: 'Completed', value: 'Completed' }
     ];
+
+    if (isSmallScreen) {
+        return (
+            <div className="warningMessage">
+                <p>This is a desktop app. Please use a larger screen (≥ 1000px).</p>
+            </div>
+        );
+    }
 
     return (
         <div className='dashboardContainer'>
@@ -123,11 +183,74 @@ function Dashboard({ onLogOut }) {
                         <button className="closeButton" onClick={() => setIsAddTaskOpen(false)}>X</button>
                         <h3>Add New Task</h3>
 
+                        <div className="formGroup">
+                            <label>Select List:</label>
+                            <select
+                                value={selectedListId}
+                                onChange={(e) => setSelectedListId(parseInt(e.target.value))}
+                            >
+                                {lists.map(list => (
+                                    <option key={list.listId} value={list.listId}>
+                                        {list.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="formGroup">
+                            <label>Task Name:</label>
+                            <input
+                                type="text"
+                                placeholder="Enter task name"
+                                value={newTaskName}
+                                onChange={(e) => setNewTaskName(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="formGroup">
+                            <label>Due Date:</label>
+                            <input
+                                type="date"
+                                value={newDueDate}
+                                onChange={(e) => setNewDueDate(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="formGroup">
+                            <label>Description:</label>
+                            <textarea
+                                rows="4"
+                                placeholder="Enter description"
+                                value={newDescription}
+                                onChange={(e) => setNewDescription(e.target.value)}
+                            />
+                        </div>
+
+                        <button className="submitTaskButton" onClick={handleAddTask}>
+                            Add Task
+                        </button>
+
+                        <hr />
+
+                        <h3>Create New List</h3>
+                        <div className="formGroup">
+                            <label>List Name:</label>
+                            <input
+                                type="text"
+                                placeholder="Enter list name"
+                                value={newListName}
+                                onChange={(e) => setNewListName(e.target.value)}
+                            />
+                        </div>
+
+                        <button className="submitListButton" onClick={handleAddList}>
+                            Add List
+                        </button>
                     </div>
                 )}
             </div>
-            <div className="StatusContainers">
 
+            <div className="StatusContainers">
                 {statusMap.map(({ label, value }) => (
                     <div
                         className="statusColumn"
@@ -152,7 +275,7 @@ function Dashboard({ onLogOut }) {
                 ))}
             </div>
         </div>
-    )
+    );
 }
 
 export default Dashboard;
